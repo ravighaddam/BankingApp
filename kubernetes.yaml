@@ -1,21 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bankapp-eta-deploy
+  name: bankapp-finance
   labels:
-    app: bankapp-eta-app
+    app: javawebapp
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: bankapp-eta-app
+      app: javawbapp
   template:
     metadata:
+      name: jawawebappdeploy
       labels:
-        app: bankapp-eta-app
+        app: javawebapp
     spec:
       containers:
-      - name: bankapp-eta-container
+      - name: javawebappcontainer
         image: ravighaddam/ravi-bankapp
         ports:
         - containerPort: 8081
@@ -23,15 +24,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: bankapp-eta-np-service
+  name: javawebapp-np-service
   labels:
-    app: bankapp-eta-app
+    app: javawebapp
 spec:
   selector:
-    app: bankapp-eta-app
+    app: javawebapp
 
   type: NodePort
   ports:
-  - nodePort: 8081   
-    port: 8081
+  - nodePort: 31002   
+    port: 80
     targetPort: 8081
