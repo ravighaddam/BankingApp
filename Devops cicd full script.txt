@@ -1,0 +1,217 @@
+pipeline {
+    agent { label 'awsdevops' }
+	
+
+    tools {
+        // Install the Maven version configured as "M3" and add it to the path.
+	jdk "aws_open_jdk"
+        maven "slave_maven"
+    }
+
+	environment {	
+		DOCKERHUB_CREDENTIALS=credentials('dockerloginid')
+	} 
+    
+    stages {
+        stage('SCM Checkout') {
+            steps {
+                // Get some code from a GitHub repository
+                git 'https://github.com/LoksaiETA/devops-java-webapp.git'
+            }
+		}
+        stage('Maven Build') {
+            steps {
+                // Run Maven on a Unix agent.
+                sh "mvn -Dmaven.test.failure.ignore=true clean package"
+            }
+		}
+        stage("Docker build"){
+            steps {
+				sh 'docker version'
+				sh "docker build -t loksaieta/loksai-eta-app:${BUILD_NUMBER} ."
+				sh 'docker image list'
+				sh "docker tag loksaieta/loksai-eta-app:${BUILD_NUMBER} loksaieta/loksai-eta-app:latest"
+            }
+        }
+		stage('Login2DockerHub') {
+
+			steps {
+				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+			}
+		}
+        stage('Approve - push Image to dockerhub'){
+            steps{
+                
+                //----------------send an approval prompt-------------
+                script {
+                   env.APPROVED_DEPLOY = input message: 'User input required Choose "yes" | "Abort"'
+                       }
+                //-----------------end approval prompt------------
+            }
+        }
+		stage('Push2DockerHub') {
+
+			steps {
+				sh "docker push loksaieta/loksai-eta-app:latest"
+			}
+		}
+        stage('Approve - Deployment to Kubernetes Cluster'){
+            steps{
+                
+                //----------------send an approval prompt-----------
+                script {
+                   env.APPROVED_DEPLOY = input message: 'User input required Choose "yes" | "Abort"'
+                       }
+                //-----------------end approval prompt------------
+            }
+        }
+        stage('Deploy to Kubernetes Cluster') {
+            steps {
+		script {
+		sshPublisher(publishers: [sshPublisherDesc(configName: 'kubernetescluster', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'kubectl apply -f k8smvndeployment.yaml', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '.', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '*.yaml')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+		}
+            }
+	}
+}
+}
+
+
+
+
+
+
+
+selenium testing!!!!
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.By;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+public class MyTestCases {
+    WebDriver driver;
+
+    @BeforeMethod
+    public void setUp() {
+        // Set up the WebDriver instance
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        driver = new ChromeDriver();
+        driver.manage().window().maximize();
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        // Quit the WebDriver instance
+        driver.quit();
+    }
+
+    @Test
+    public void testLogin() {
+        // Navigate to the login page
+        driver.get("https://example.com/login");
+
+        // Perform login actions
+        driver.findElement(By.id("username")).sendKeys("myUsername");
+        driver.findElement(By.id("password")).sendKeys("myPassword");
+        driver.findElement(By.id("loginButton")).click();
+
+        // Verify the login was successful
+        String welcomeMessage = driver.findElement(By.id("welcomeMessage")).getText();
+        Assert.assertEquals(welcomeMessage, "Welcome, User!");
+
+        // Perform further test assertions or actions
+    }
+
+    @Test
+    public void testSearch() {
+        // Navigate to the search page
+        driver.get("https://example.com/search");
+
+        // Perform search actions
+        driver.findElement(By.id("searchInput")).sendKeys("test");
+        driver.findElement(By.id("searchButton")).click();
+
+        // Verify search results
+        boolean searchResultsDisplayed = driver.findElement(By.id("searchResults")).isDisplayed();
+        Assert.assertTrue(searchResultsDisplayed);
+
+        // Perform further test assertions or actions
+    }
+}
+
+
+
+
+
+
+Certainly! Here's an example Ansible playbook to copy artifacts to a target node:
+
+---
+- name: Copy artifacts to target node
+  hosts: target_node
+  become: true
+
+  vars:
+    artifact_src: /path/to/artifacts
+    artifact_dest: /opt/myapp
+    owner: myuser
+    group: mygroup
+
+  tasks:
+    - name: Copy artifacts to target node
+      copy:
+        src: "{{ artifact_src }}"
+        dest: "{{ artifact_dest }}"
+        owner: "{{ owner }}"
+        group: "{{ group }}"
+        mode: 0755
+```
+
+In this playbook:
+
+- Update the `hosts` line with the name or IP address of your target node.
+- Set the values for the variables under the `vars` section according to your specific requirements. Adjust the `artifact_src` variable to the source directory of your artifacts and the `artifact_dest` variable to the destination directory on the target node. Modify the `owner` and `group` variables with the appropriate ownership values for the copied files/directories.
+
+The playbook contains a single task that uses the `copy` module to copy artifacts from the source directory (`artifact_src`) to the target node's destination directory (`artifact_dest`). The ownership and permissions of the copied artifacts are set using the `owner`, `group`, and `mode` parameters.
+
+Save the playbook in a file (e.g., `copy_artifacts.yml`) and execute it using the `ansible-playbook` command:
+
+```shell
+ansible-playbook copy_artifacts.yml
+```
+
+Ensure you have Ansible installed and the target node's SSH connectivity properly configured before running the playbook. Adjust any other parameters or actions based on your specific use case.
+
+
+
+
+
+
+
+JACOC Code Coverage jenkins plugin
+
+Emial notification plugins:::
+
+Gmail:: Gmail Access Token
+
+SMTP: server
+smtp.gmail.com
+
+SMTP Authentication
+
+SMTP  :: 465
+
+Login to Gmail :::
+
+Click Account settings
+
+Security
+
+ Enable MFA
+ Create Token
+
+Create App Token----16chrs
+ 
